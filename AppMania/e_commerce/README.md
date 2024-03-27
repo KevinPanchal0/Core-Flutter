@@ -1,24 +1,20 @@
 # Your App Name
 
-Short description or tagline about your app.
+A mobile e-commerce application built with Flutter, featuring a user-friendly interface for browsing products, adding them to the cart, and managing orders efficiently.
 
 ## Table of Contents
 - [Screenshots](#screenshots)
 - [Features](#features)
-- [Install<ation](#installation)
+- [Installation](#installation)
 
 ## Screenshots
 Include screenshots or gifs showcasing your app's UI and features.
 
 ## Features
-- List key features of your app.
-- Highlight unique functionalities or aspects that make your app stand out.
+- Add to cart from HomePage and DetailPage.
+- Total price calculation in CartPage.
+- Filtering category-wise in HomePage.
+- Increase/Decrease item quantity in DetailPage.
 
 ## Installation
-Provide instructions on how to install or set up your app. Include any prerequisites, such as Flutter SDK version, dependencies, etc.
-
-```bash
-git clone https://github.com/your_username/your_app_name.git
-cd your_app_name
-flutter pub get
-flutter run
+-[Download the app](https://drive.google.com/file/d/1rHTC4rUp6dqegKwEDZsse2pdSw3hTb8q/view?usp=sharing)
