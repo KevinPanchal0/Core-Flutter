@@ -1,5 +1,5 @@
 class Product {
-  final int qty;
+  int qty;
   final String id;
   final String title;
   final String description;
@@ -11,7 +11,7 @@ class Product {
   final dynamic images;
 
 
-  Product({required this.qty,required this.id, required this.title, required this.description, required this.price, required this.rating, required this.stock, required this.brand, required this.category, required this.images});
+  Product({this.qty=0,required this.id, required this.title, required this.description, required this.price, required this.rating, required this.stock, required this.brand, required this.category, required this.images});
 
 }
 
@@ -114,7 +114,7 @@ final List<Product> arrProducts = [
   ),
   Product(
       id: '9',
-      qty: 1,
+      qty: 0,
       title: 'Infinix INBOOK',
       description: 'Infinix Inbook X1 Ci3 10th 8GB 256GB 14 Win10 Grey – 1 Year Warranty',
       price: 1099,
@@ -126,7 +126,7 @@ final List<Product> arrProducts = [
   ),
   Product(
       id: '10',
-      qty: 1,
+      qty: 0,
       title: 'HP Pavilion 15-DK1056WM',
       description: 'HP Pavilion 15-DK1056WM Gaming Laptop 10th Gen Core i5, 8GB, 256GB SSD, GTX 1650 4GB, Windows 10',
       price: 1099,
@@ -137,3 +137,10 @@ final List<Product> arrProducts = [
       images: 'assets/HP-Pavilion-15-DK1056WM.jpg'
   ),
 ];
+
+class CartItem {
+  final Product product; // Product in the cart
+  int quantity; // Quantity of the product in the cart
+
+  CartItem({required this.product, this.quantity = 1}); // Default quantity is 1
+}

@@ -36,17 +36,42 @@ class HomePage extends StatefulWidget {
 
 
 class _HomePageState extends State<HomePage> {
-  final List<String> categories= [
-    'SmartPhones',
-    'Laptops'
-  ];
-  List<String> selectedCategories = [];
+
+  String selectedCategory = 'All'; // Default selected category
+  List<Product> filteredProducts = []; // Filtered product list
+
+  @override
+  void initState(){
+        super.initState();
+        filteredProducts.addAll(arrProducts);
+  }
+
+  void filterProducts(String category) {
+    setState(() {
+      if (category == 'All') {
+        // Show all products
+        filteredProducts.clear();
+        filteredProducts.addAll(arrProducts);
+      } else {
+        // Filter products based on selected category
+        filteredProducts.clear();
+        filteredProducts.addAll(arrProducts.where((product) => product.category == category).toList());
+      }
+      selectedCategory = category; // Update selected category
+    });
+  }
+
+  // final List<String> categories= [
+  //   'SmartPhones',
+  //   'Laptops',
+  // ];
+  // List<String> selectedCategories = [];
   @override
   Widget build(BuildContext context) {
-    final filterProducts = arrProducts.where((arrProducts){
-      return selectedCategories.isEmpty  ||
-      selectedCategories.contains(arrProducts.category);
-    }).toList();
+    // final filterProducts = arrProducts.where((arrProducts){
+    //   return selectedCategories.isEmpty  ||
+    //   selectedCategories.contains(arrProducts.category);
+    // }).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -57,8 +82,13 @@ class _HomePageState extends State<HomePage> {
             Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(onPressed: (){
-
-            },
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CartPage(),
+                ),
+              );
+              },
                 icon: const Icon(Icons.shopping_cart,color: Colors.white,)),
           )
       ],
@@ -66,42 +96,54 @@ class _HomePageState extends State<HomePage> {
         elevation: 8,
       ),
       body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
+          Padding(
             padding: const EdgeInsets.all(8.0),
-            margin: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: categories.map((category) => FilterChip(
-                  selected: selectedCategories.contains(category),
-                  label: Text(category,style: const TextStyle(
-                    fontFamily: 'EncodeSansExpanded'
-                  ),
-                  ),
-                  onSelected: (selected){
-                    setState(() {
-                      if (selected){
-                        selectedCategories.add(category);
-                      }
-                      else{
-                        selectedCategories.remove(category);
-                      }
-                    });
-                  }),
-              ).toList(),
+            child: DropdownButton<String>(
+              borderRadius: BorderRadius.circular(10),
+              dropdownColor: Colors.grey[200],
+              value: selectedCategory,
+              onChanged: (String? newValue) {
+                if (newValue != null) {
+                  filterProducts(newValue);
+                }
+              },
+              items: const [
+                DropdownMenuItem(
+                  value: 'All',
+                  child: Text('All Categories'),
+                ),
+                DropdownMenuItem(
+                  value: 'SmartPhones',
+                  child: Text('SmartPhones'),
+                ),
+                DropdownMenuItem(
+                  value: 'Laptops',
+                  child: Text('Laptops'),
+                ),
+                // Add more categories as needed
+              ],
+
+              style: const TextStyle(
+                fontFamily: 'EncodeSansExpanded',
+                color: Colors.black,
+                fontSize: 20,
+              ),
             ),
           ),
           Expanded(
               child: ListView.builder(
-                itemCount: filterProducts.length,
+                itemCount: filteredProducts.length,
                   itemBuilder: (context, index){
-                  final product = filterProducts[index];
+                  final product = filteredProducts[index];
                     return Card(
                       elevation: 8.0,
                       margin: const EdgeInsets.all(8.0),
                       child: InkWell(
                         onTap: (){
-                          Navigator.push((context), MaterialPageRoute(builder: (context)=> Details(id: product.id,qty: product.qty as int, title: product.title, description: product.description, price: product.price as int, rating: product.rating, stock: product.stock, brand: product.brand, category: product.category,images: product.images,)));
+                          Navigator.push((context), MaterialPageRoute(builder: (context)=> Details(id: product.id,qty: product.qty as int, title: product.title, description: product.description, price: product.price as int, rating: product.rating, stock: product.stock, brand: product.brand, category: product.category,images: product.images, product: product,)));
                         },
                         child: ListTile(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10,vertical: 10),
@@ -111,7 +153,13 @@ class _HomePageState extends State<HomePage> {
                             children: [
                               Text('Rating ${product.rating}',style: const TextStyle(fontFamily: 'EncodeSansExpanded',),),
                               IconButton(onPressed: (){
-
+                                addToCart(product);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Product added to cart'),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
                               }, icon: const Icon(Icons.add_shopping_cart)),
                             ],
                           ),
@@ -128,7 +176,15 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class Details extends StatelessWidget {
+void addToCart(Product product) {
+  // Add the product to the cart
+  CartItem cartItem = CartItem(product: product);
+  cartList.add(cartItem);
+}
+
+List<CartItem> cartList = [];
+
+class Details extends StatefulWidget {
   final String id;
   final int qty;
   final String title;
@@ -139,8 +195,45 @@ class Details extends StatelessWidget {
   final String brand;
   final String category;
   final dynamic images;
-  const Details({super.key, required this.id, required this.qty,required this.title, required this.description, required this.price, required this.rating, required this.stock, required this.brand, required this.category, this.images, });
+   const Details({super.key, required this.id, required this.qty,required this.title, required this.description, required this.price, required this.rating, required this.stock, required this.brand, required this.category, this.images, required this.product, });
 
+    final Product product;
+  @override
+  State<Details> createState() => _DetailsState();
+}
+
+
+class _DetailsState extends State<Details> {
+int _quantity = 1;
+
+
+void _decrementQuantity() {
+  if (_quantity > 1) {
+    setState(() {
+      _quantity--;
+    });
+  }
+}
+
+void _incrementQuantity() {
+  setState(() {
+    _quantity++;
+  });
+}
+
+void _addToCart() {
+  // Add the product to the cart with the selected quantity
+  CartItem cartItem = CartItem(product: widget.product, quantity: _quantity);
+  cartList.add(cartItem);
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Product added to cart'),
+      duration: Duration(seconds: 2),
+    ),
+  );
+}
+double cartAmount = 0;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,18 +253,12 @@ class Details extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: IconButton(onPressed: (){
-              if(qty == 0) {
-                Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                    CartPage(id: id,
-                        qty: qty,
-                        title: title,
-                        description: description,
-                        price: price,
-                        rating: rating,
-                        stock: stock,
-                        brand: brand,
-                        category: category)));
-              }
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CartPage(),
+                ),
+              );
              },
                 icon: const Icon(Icons.shopping_cart,color: Colors.white,)),
           )
@@ -183,19 +270,19 @@ class Details extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.start,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(child: Image.asset(images.toString(),height: 390,)),
+            Center(child: Image.asset(widget.images.toString(),height: 390,)),
             Padding(
               padding: const EdgeInsets.only(left: 8.0),
-              child: Text(title,style: const TextStyle(fontSize: 30,fontFamily: 'EncodeSansExpanded'),),
+              child: Text(widget.title,style: const TextStyle(fontSize: 30,fontFamily: 'EncodeSansExpanded'),),
             ),
             Padding(
               padding: const EdgeInsets.only(left: 8.0),
-              child: Text('by $brand',style: const TextStyle(fontFamily: 'EncodeSansExpanded'),),
+              child: Text('by ${widget.brand}',style: const TextStyle(fontFamily: 'EncodeSansExpanded'),),
             ),
             // Spacer(),
              Padding(
               padding: const EdgeInsets.all(8.0),
-              child: Text('\$${price.toString()}',style: const TextStyle(fontSize: 30,color: Colors.redAccent,fontFamily: 'EncodeSansExpanded'),),
+              child: Text('\$${widget.price.toString()}',style: const TextStyle(fontSize: 30,color: Colors.redAccent,fontFamily: 'EncodeSansExpanded'),),
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -206,7 +293,7 @@ class Details extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(description,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
+                  child: Text(widget.description,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
                 ),
               ],
             ),
@@ -219,7 +306,7 @@ class Details extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(stock,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
+                  child: Text(widget.stock,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
                 ),
               ],
             ),
@@ -232,7 +319,7 @@ class Details extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(rating,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
+                  child: Text(widget.rating,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
                 ),
               ],
             ),
@@ -245,38 +332,43 @@ class Details extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(category,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
+                  child: Text(widget.category,style: const TextStyle(fontSize: 15,fontFamily: 'EncodeSansExpanded'),),
                 ),
               ],
             ),
-            const SizedBox(height: 30,),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('Quantity',style: TextStyle(fontWeight: FontWeight.w600,fontSize: 20,fontFamily: 'EncodeSansExpanded'),),
+            ),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SizedBox(
-                  height: 60,
-                  width: 170,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      print('tapped');
-                      if(qty ==0){
-                        qty == 1;
-                      }
-                    },
-                     child: const Padding(
-                       padding: EdgeInsets.all(8.0),
-                       child:  Text(
-                          'Add to Cart',
-                         style: TextStyle(
-                           fontSize: 20
-                         ),
-                        ),
-                     ),
-                  ),
+                IconButton(
+                color: Colors.blue,
+                  icon: const Icon(Icons.remove,size: 30,),
+                  onPressed: _decrementQuantity,
                 ),
+                Text(_quantity.toString(),style: const TextStyle(fontFamily: 'EncodeSansExpanded',fontSize: 25),),
+                IconButton(
+                  color: Colors.blue,
+                  icon: const Icon(Icons.add,size: 30,),
+                  onPressed: _incrementQuantity,
+                ),
+                const SizedBox(width: 20,),
+                SizedBox(
+                    height: 60,
+                    width: 150,
+                    child: ElevatedButton(
+                      onPressed: (){
+                        _addToCart();
+                      },
+                      child: const Icon(Icons.add_shopping_cart_outlined,size: 30,color: Colors.redAccent,),
+                    ),
+                ),
+                const SizedBox(),
               ],
             ),
-            const SizedBox(height: 30,),
+            const SizedBox(height: 20,),
           ],
         ),
       ),
@@ -284,22 +376,8 @@ class Details extends StatelessWidget {
   }
 }
 
-
-
 class CartPage extends StatefulWidget {
-  final String id;
-  final int qty;
-  final String title;
-  final String description;
-  final int price;
-  final String rating;
-  final String stock;
-  final String brand;
-  final String category;
-  final dynamic images;
-
-  const CartPage(
-      {super.key, required this.id, required this.qty, required this.title, required this.description, required this.price, required this.rating, required this.stock, required this.brand, required this.category, this.images});
+  const CartPage({super.key});
 
   @override
   State<CartPage> createState() => _CartPageState();
@@ -310,8 +388,80 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: const Text('Cart'),
       ),
-      body: Text(widget.title),
+      body: ListView.builder(
+        itemCount: cartList.length,
+        itemBuilder: (context, index) {
+          final cartItem = cartList[index];
+          return ListTile(
+            title: Text(cartItem.product.title),
+            subtitle: Text('\$${cartItem.product.price}'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(cartItem.quantity.toString()),
+                IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () {
+                    setState(() {
+                    removeFromCart(index);
+                    });
+                  },
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+      bottomNavigationBar: BottomAppBar(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Total: \$${calculateTotalPrice()}'),
+              ElevatedButton(
+                onPressed: () {
+                  // Implement checkout functionality
+                  // You can navigate to a checkout page or show a confirmation dialog
+                },
+                child: const Text('Checkout'),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
+  }
+
+  void updateQuantity(int index, int newQuantity) {
+    cartList[index].quantity = newQuantity;
+  }
+
+  void removeFromCart(int index) {
+    showDialog(context: context, builder: (BuildContext context){
+      return AlertDialog(
+        title: const Text('Confirm Deletion',style: TextStyle(fontFamily: 'EncodeSansExpanded'),),
+        content: const Text('Are you sure you want to remove this item from the cart?',style: TextStyle(fontFamily: 'EncodeSansExpanded'),),
+        actions: [
+          TextButton(onPressed: (){Navigator.pop(context);}, child: const Text('Cancle',style: TextStyle(fontFamily: 'EncodeSansExpanded'),)),
+          TextButton(onPressed: (){
+            setState(() {
+              cartList.removeAt(index);
+            });
+            Navigator.pop(context);
+          }, child: const Text('Delete')),
+        ],
+      );
+    });
+  }
+
+  int calculateTotalPrice() {
+    int total = 0;
+    for (var cartItem in cartList) {
+      total += cartItem.product.price * cartItem.quantity;
+    }
+    return total;
   }
 }
