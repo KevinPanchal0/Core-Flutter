@@ -45,5 +45,5 @@ Timer Watch: Need to time an activity or track your progress? Our Timer watch co
 With our user-friendly interface, you can switch between these watch types effortlessly, allowing you to choose the style and functionality that suits your needs at any moment. Whether you're keeping track of time in a meeting, timing your workout sessions, or simply admiring the artistry of a classic clock face, our watch application has everything you need.
 
 ## Installation
-- [Download the app](https://drive.google.com/file/d/1kE1j2ivKstFqCB1fCOrhw7rF6TwPmROt/view?usp=sharing)
+- [Download the app](https://drive.google.com/file/d/1oFPcEdGXz4BGf9zbpGcaht7uQjd6-SvI/view?usp=sharing)
 - And Install
